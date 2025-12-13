@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial import distance_matrix
 
-def create_matrix (num_cities, a = 5, b = 2, Q = 1):
+def create_matrix (num_cities, a, b, Q):
     coords = np.random.rand(num_cities, 2) * 100
     lenghts = distance_matrix(coords, coords)
     np.fill_diagonal(lenghts, np.nan)
@@ -16,10 +16,9 @@ def create_matrix (num_cities, a = 5, b = 2, Q = 1):
 
     # Створюємо вершини
     nods = np.array([i for i in range(lenghts.shape[0])])
-    lenghts = np.nan_to_num(lenghts)
-    return lenghts, nods, attractiveness, pheromone_matrix, coords
+    return [lenghts, nods, attractiveness, pheromone_matrix, coords]
 
-def algorithm(lenghts, nods, attractiveness, pheromone_matrix, num_ants, evaporation_rate = 0.15, a = 5, b = 2, Q = 1):
+def algorithm(evaporation_rate, num_ants, lenghts, nods, attractiveness, pheromone_matrix, a, b, Q):
     best_path = ([], float('inf'))
     history_best_path = []
     history_best_distence = np.array([])
@@ -93,3 +92,10 @@ def algorithm(lenghts, nods, attractiveness, pheromone_matrix, num_ants, evapora
                 break
     
     return history_best_distence
+
+def together(num_cities, a, b, Q, evaporation_rate, num_ants):
+    def1 = create_matrix(num_cities, a, b, Q)
+    coords = def1[4]
+
+    history_best_distence = algorithm(evaporation_rate, num_ants, def1[0], def1[1], def1[2], def1[3], a, b, Q)
+    return [coords, history_best_distence]
