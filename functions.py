@@ -26,7 +26,7 @@ def algorithm(lenghts, nods, attractiveness, pheromone_matrix, num_ants, evapora
     history_best_path = []
     history_best_distence = np.array([])
     global_best_distance = np.array([float('inf')])
-    for i in range(450):
+    for i in range(150):
         ant_pathes = []
         for n in range(num_ants):
 
@@ -96,8 +96,8 @@ def algorithm(lenghts, nods, attractiveness, pheromone_matrix, num_ants, evapora
     
     return history_best_distence, global_best_distance, history_best_path
 
-def make_dick_adjacency_matrix(history_best_path):
-    dick_adjacency_matrix = {} # Словник з матрицями суміжності
+def make_dict_adjacency_matrix(history_best_path):
+    dict_adjacency_matrix = {} # Словник з матрицями суміжності
     for j in range(len(history_best_path)):
         path_len = len(history_best_path[j])
         adjacency_matrix = np.zeros(path_len ** 2).reshape(path_len, path_len) # Матриця суміжності
@@ -106,9 +106,9 @@ def make_dick_adjacency_matrix(history_best_path):
             v1, v2 = history_best_path[j][i], history_best_path[j][(i+1) % path_len]
             adjacency_matrix[v1, v2] = adjacency_matrix[v2, v1] = 1
 
-        dick_adjacency_matrix[j] = adjacency_matrix
+        dict_adjacency_matrix[j] = adjacency_matrix
      
-    return dick_adjacency_matrix
+    return dict_adjacency_matrix
 
 # Далі функції для вузаалізації
     
@@ -118,7 +118,7 @@ lenghts, nods, attractiveness, pheromone_matrix, coords = create_matrix(num_citi
 
 history_best_distence, global_best_distance, history_best_path = algorithm(lenghts, nods, attractiveness, pheromone_matrix, num_ants=100)
 
-dick_adjacency_matrix = make_dick_adjacency_matrix(history_best_path)
+dict_adjacency_matrix = make_dict_adjacency_matrix(history_best_path)
 
 def animation(num_cities, coords, dick_adjacency_matrix):
     
@@ -130,14 +130,14 @@ def animation(num_cities, coords, dick_adjacency_matrix):
     def update(frame):
         ax.clear()
 
-        current_G = nx.from_numpy_array(dick_adjacency_matrix[frame])
+        current_G = nx.from_numpy_array(dict_adjacency_matrix[frame])
         nx.draw_networkx_nodes(current_G, pos, ax=ax, node_color='blue', node_size=300)
         nx.draw_networkx_edges(current_G, pos, edge_color="grey")
 
     ani = FuncAnimation(
     fig,
     update,
-    frames=len(dick_adjacency_matrix),
+    frames=len(dict_adjacency_matrix),
     interval=700,
     repeat=False
 )
