@@ -1,7 +1,10 @@
 import numpy as np
 from scipy.spatial import distance_matrix
+import networkx as nx 
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation, PillowWriter
 
-def create_matrix (num_cities, a, b, Q):
+def create_matrix (num_cities, a=5, b=1, Q=1):
     coords = np.random.rand(num_cities, 2) * 100
     lenghts = distance_matrix(coords, coords)
     np.fill_diagonal(lenghts, np.nan)
@@ -16,14 +19,14 @@ def create_matrix (num_cities, a, b, Q):
 
     # Створюємо вершини
     nods = np.array([i for i in range(lenghts.shape[0])])
-    return [lenghts, nods, attractiveness, pheromone_matrix, coords]
+    return lenghts, nods, attractiveness, pheromone_matrix, coords
 
-def algorithm(evaporation_rate, num_ants, lenghts, nods, attractiveness, pheromone_matrix, a, b, Q):
+def algorithm(lenghts, nods, attractiveness, pheromone_matrix, num_ants, evaporation_rate=0.15, a=5, b=1, Q=1):
     best_path = ([], float('inf'))
     history_best_path = []
     history_best_distence = np.array([])
     global_best_distance = np.array([float('inf')])
-    for i in range(200):
+    for i in range(450):
         ant_pathes = []
         for n in range(num_ants):
 
@@ -91,7 +94,74 @@ def algorithm(evaporation_rate, num_ants, lenghts, nods, attractiveness, pheromo
             if history_best_distence[-1] == history_best_distence[-2] == history_best_distence[-3] == history_best_distence[-4] == history_best_distence[-5] == history_best_distence[-6] == history_best_distence[-7] == history_best_distence[-8] == history_best_distence[-9]:
                 break
     
-    return history_best_distence
+    return history_best_distence, global_best_distance, history_best_path
+
+def make_dick_adjacency_matrix(history_best_path):
+    dick_adjacency_matrix = {} # Словник з матрицями суміжності
+    for j in range(len(history_best_path)):
+        path_len = len(history_best_path[j])
+        adjacency_matrix = np.zeros(path_len ** 2).reshape(path_len, path_len) # Матриця суміжності
+
+        for i in range(path_len):
+            v1, v2 = history_best_path[j][i], history_best_path[j][(i+1) % path_len]
+            adjacency_matrix[v1, v2] = adjacency_matrix[v2, v1] = 1
+
+        dick_adjacency_matrix[j] = adjacency_matrix
+     
+    return dick_adjacency_matrix
+
+# Далі функції для вузаалізації
+    
+num_cities = 30
+
+lenghts, nods, attractiveness, pheromone_matrix, coords = create_matrix(num_cities)
+
+history_best_distence, global_best_distance, history_best_path = algorithm(lenghts, nods, attractiveness, pheromone_matrix, num_ants=100)
+
+dick_adjacency_matrix = make_dick_adjacency_matrix(history_best_path)
+
+def animation(num_cities, coords, dick_adjacency_matrix):
+    
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.set_axis_off()
+    pos = {i: coords[i] for i in range(num_cities)}
+
+
+    def update(frame):
+        ax.clear()
+
+        current_G = nx.from_numpy_array(dick_adjacency_matrix[frame])
+        nx.draw_networkx_nodes(current_G, pos, ax=ax, node_color='blue', node_size=300)
+        nx.draw_networkx_edges(current_G, pos, edge_color="grey")
+
+    ani = FuncAnimation(
+    fig,
+    update,
+    frames=len(dick_adjacency_matrix),
+    interval=700,
+    repeat=False
+)
+
+    # ani.save('animation.gif', writer='pillow', fps=3)
+    plt.show()
+    
+
+def show_min_global(global_best_distance):
+    
+  fig, ax = plt.subplots(dpi=150)
+  ax.set(xlabel="Ітерація", ylabel="Довжина шляху", title="Пошук глобального мінімумального шляху", xlim=(0, len(history_best_distence) - 1))
+  ax.plot(global_best_distance)
+  plt.show()
+  
+
+
+def show_min_distance_his(history_best_distence):
+    
+  fig, ax = plt.subplots(dpi=150)
+  ax.set(xlabel="Ітерація", ylabel="Довжина шляху", xlim=(0, len(history_best_distence) - 1), title="Найменший шлях на кожній ітерації")
+  ax.plot(history_best_distence)
+  plt.show()
+
 
 def together(num_cities, a, b, Q, evaporation_rate, num_ants):
     def1 = create_matrix(num_cities, a, b, Q)
